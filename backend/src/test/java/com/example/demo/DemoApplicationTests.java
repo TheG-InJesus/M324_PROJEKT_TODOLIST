@@ -19,7 +19,7 @@ public class DemoApplicationTests {
         @Test
         void contextLoads() {
                 System.out.println("TEST LÄUFT: alles gut");
-                assertTrue(true);
+                assertTrue(false);
         }
 
     @Autowired
