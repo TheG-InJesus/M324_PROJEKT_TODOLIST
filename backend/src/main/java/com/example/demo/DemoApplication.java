@@ -77,7 +77,7 @@ public class DemoApplication {
 	}
 
 	@CrossOrigin
-	@DeleteMapping("/delete")
+	@PostMapping("/delete")
 	public String delTask(@RequestBody String taskdescription) {
 		System.out.println("API EP '/delete': '" + taskdescription + "'");
 		ObjectMapper mapper = new ObjectMapper();
@@ -103,7 +103,7 @@ public class DemoApplication {
 
 	@CrossOrigin
 	@PostMapping("/idkEither")
-	public String addTask(@RequestBody String taskdescription) {
+	public String fakeAddTask(@RequestBody String taskdescription) {
 		System.out.println("API EP '/idkEither': '" + taskdescription + "'");
 		ObjectMapper mapper = new ObjectMapper();
 		try {
