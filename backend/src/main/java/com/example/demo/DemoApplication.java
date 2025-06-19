@@ -77,7 +77,7 @@ public class DemoApplication {
 	}
 
 	@CrossOrigin
-	@PostMapping("/delete")
+	@DeleteMapping("/delete")
 	public String delTask(@RequestBody String taskdescription) {
 		System.out.println("API EP '/delete': '" + taskdescription + "'");
 		ObjectMapper mapper = new ObjectMapper();
@@ -94,6 +94,29 @@ public class DemoApplication {
 				}
 			}
 			System.out.println(">>>task: '" + task.getTaskdescription() + "' not found!");
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		return "redirect:/";
+	}
+
+
+	@CrossOrigin
+	@PostMapping("/idkEither")
+	public String addTask(@RequestBody String taskdescription) {
+		System.out.println("API EP '/idkEither': '" + taskdescription + "'");
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			Task task;
+			task = mapper.readValue(taskdescription, Task.class);
+			for (Task t : tasks) {
+				if (t.getTaskdescription().equals(task.getTaskdescription())) {
+					System.out.println(">>>task: '" + task.getTaskdescription() + "' already exists!");
+					return "redirect:/"; // duplicates will be ignored
+				}
+			}
+			System.out.println("...adding task: '" + task.getTaskdescription() + "'");
+			tasks.add(task);
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 		}
