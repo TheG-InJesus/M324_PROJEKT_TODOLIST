@@ -68,7 +68,7 @@ function App() {
             value={taskDescription}
             onChange={(e) => setTaskDescription(e.target.value)}
           />
-          <button type="submit">Absenden</button>
+          <button className="submit-button" type="submit">Absenden</button>
         </form>
         <div>
           <ul className="todo-list">
