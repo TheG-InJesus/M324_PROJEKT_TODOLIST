@@ -52,7 +52,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_PAT }}
+          password: ${{ secrets.HELLO_WORLD }}
 
       # ---------- Build & push backend ----------
       - uses: docker/build-push-action@v4
