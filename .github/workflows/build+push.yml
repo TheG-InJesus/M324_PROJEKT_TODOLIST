@@ -47,7 +47,7 @@ jobs:
           echo "REPO=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - uses: docker/setup-buildx-action@v2
-
+      # Secret must be named GHCR_PAT
       - uses: docker/login-action@v2
         with:
           registry: ghcr.io
