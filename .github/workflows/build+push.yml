@@ -1,69 +1,71 @@
-# workflow with upload of artifacts for backend and frontend
-# all in one single serial execution
-
-name: Java & Frontend CI (Single Job)
+name: CI & Docker push
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches: [ main ]
 
 jobs:
-  build-and-test:
+  build-and-push:
     runs-on: ubuntu-latest
-    name: Build & Test (Java + Frontend)
+    env:
+      IMAGE_NS: ghcr.io/${{ github.repository_owner }}/m324_projekt_todolist
     steps:
       - uses: actions/checkout@v3
 
-      # Backend Setup
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
+      # ---------- Maven (Backend) ----------
+      - uses: actions/setup-java@v3
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: 17
+          distribution: temurin
           cache: maven
 
-      - name: Backend Test
-        run: mvn -f backend/ --batch-mode test
-        continue-on-error: true
+      - name: Backend tests & package
+        run: |
+          mvn -f backend/ -B test
+          mvn -f backend/ -B package -DskipTests
 
-      - name: Backend Build
-        run: mvn --batch-mode package --file backend/pom.xml
-
-      - name: Lowercase owner and repo
-        run: 
-
-      - name: Backend Test Report
-        uses: dorny/test-reporter@v1
-        if: always()
+      # ---------- Node (Frontend) ----------
+      - uses: actions/setup-node@v3
         with:
-          name: Maven Tests
-          path: backend/target/surefire-reports/*.xml
-          reporter: java-junit
-          fail-on-error: true
-
-      # Frontend Setup
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: 20
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
+      - name: Frontend tests & build
+        run: |
+          cd frontend
+          npm ci
+          npm run test -- --run
+          npm run build
 
-      - name: Run Vitest
-        working-directory: frontend
-        run: npm run test -- --run
+      # ---------- Docker Buildx ----------
+      - name: Lowercase owner and repo
+        run: |
+          echo "OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "REPO=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
+      - uses: docker/setup-buildx-action@v2
 
-      - name: Upload frontend artifact
-        uses: actions/upload-artifact@v4
+      - uses: docker/login-action@v2
         with:
-          name: frontend-build
-          path: frontend/dist
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      # ---------- Build & push backend ----------
+      - uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER }}/${{ env.REPO }}/todo-backend:latest
+
+      # ---------- Build & push frontend ----------
+      - uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER }}/${{ env.REPO }}/todo-frontend:latest
