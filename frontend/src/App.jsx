@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 import './App.css';
+import logo from "./assets/react.svg";
+
+//const API_BASE = 'http://localhost:4000/api/tasks';
+//const API_BASE = `http://${window.location.hostname}:4000/api/tasks`;
+const API_BASE = '/api/v1/tasks';
 
 function App() {
   const [taskDescription, setTaskDescription] = useState('');
@@ -7,7 +12,7 @@ function App() {
 
   useEffect(() => {
     // Initialdaten vom Backend holen
-    fetch('http://localhost:8080/api/tasks')
+    fetch(API_BASE)
       .then((res) => res.json())
       .then((data) => setTasks(data))
       .catch((err) => console.error('Fehler beim Laden der Tasks:', err));
@@ -19,12 +24,12 @@ function App() {
     if (!taskDescription.trim()) return;
 
     const newTask = {
-      description: taskDescription.trim(),
+      taskdescription: taskDescription.trim(),
       done: false,
     };
 
     // Optional: An Backend senden
-    fetch('http://localhost:8080/api/tasks', {
+    fetch(API_BASE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newTask),
@@ -42,23 +47,26 @@ function App() {
       });
   };
 
-  // Löschen-Handler: entfernt aus State und ruft DELETE-API auf
   const handleDelete = (id) => {
-    // State aktualisieren
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    // Zustand sofort aktualisieren
+    setTasks(prev => prev.filter(t => t.id !== id));
 
-    // Optional: Backend informieren
-    fetch(`http://localhost:8080/api/tasks/${id}`, {
-      method: 'DELETE',
-    }).catch((err) =>
-      console.error('Fehler beim Löschen der Aufgabe:', err)
-    );
+    // REST-Delete am Server auslösen
+    fetch(`${API_BASE}/${id}`, {
+      method: 'DELETE'
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`Löschen fehlgeschlagen: Status ${res.status}`);
+        }
+      })
+      .catch(err => console.error('Fehler beim Löschen der Aufgabe:', err));
   };
 
   return (
     <div className="App">
       <header className="App-header">
-        <img src="/src/assets/react.svg" className="App-logo" alt="logo" />
+        <img src={logo} className="App-logo" alt="logo" />
         <h1>ToDo Liste</h1>
         <form className="todo-form" onSubmit={handleSubmit}>
           <label htmlFor="taskdescription">Neues Todo anlegen:</label>
@@ -68,13 +76,13 @@ function App() {
             value={taskDescription}
             onChange={(e) => setTaskDescription(e.target.value)}
           />
-          <button className="submit-button" type="submit">Absenden</button>
+          <button type="submit">Absenden</button>
         </form>
         <div>
           <ul className="todo-list">
             {tasks.map((task) => (
               <li key={task.id} className="todo-item">
-                {task.description}
+                {task.taskdescription}
                 <button
                   onClick={() => handleDelete(task.id)}
                   aria-label="Löschen"
